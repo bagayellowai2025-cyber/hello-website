@@ -90,8 +90,10 @@
   }
 
   .hero .person {
-    font-size: 168px;
-    line-height: 1;
+    width: 168px;
+    height: auto;
+    image-rendering: pixelated;
+    display: block;
     filter: drop-shadow(0 34px 26px rgba(60, 50, 35, 0.28));
     user-select: none;
   }
@@ -165,7 +167,7 @@
       width: 100%;
       margin: 8px auto 36px;
     }
-    .hero .person { font-size: 120px; }
+    .hero .person { width: 120px; }
 
     /* products reflow into a responsive grid */
     .item {
@@ -210,7 +212,7 @@
 
     <!-- Center figure -->
     <div class="hero">
-      <div class="person" aria-hidden="true">🧍🏻‍♂️</div>
+      <img class="person" alt="Brock" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAAAMFBMVEUBAAAAAAAsOyU7LCViLBliSjNiM0KEakKpYkrYajvPjWL2xan///9ijVI7akqyQgPb/fWDAAAAAXRSTlMAQObYZgAAAh5JREFUeNrt14lq4zAUhWEdbdESS+//tnOudQ2dsIzRDTAU/8hpgPL1VGGL+y96enp6SokvIXxLCy69ggt8voNSC68XT0JIcPZIrVJIdjClpKBEMFhBlXjkYVYx6DQeLZgXKhbWK2D0aKzTwzc+lSCjiPEsMAW7KBhP6qecYAZL6izJUzrsXmqNUAkhC+iMASnT6lcFzhpya61rHAxmVCkW3ReAWGudEV8A+eQWK0E+0yyGQI9viMmZFcZ75ELwMiHrCFpFByDSSwQnQcYfFlDuLoIpKCJMXqUoZJwiro3RAJ6iUBBQRs5ZDdfIXeKcpIpT/sCuqMRF6hsZbQBpLEm31jPsgWsUsMjFrcLuDYrn2JpXp3oY2AEzDQFV732JERhjwAiW0k+Q2nF4P4bfAeuEerlLLWIcbBwUseHVOS+wiNfyoMS2warempjp6UKK2PEUlHwrMvAwgrg4PzJb4BItoDhD+glavEHiQ7SAQwkFVRzY8OKHp+BqB4R6q9Pzfg/Mc66B/vgLhMOheXe/Ukqus+LT84Bz8CfHife51nvLMnBcmGcAxvgh4q7XWxcRcH7otOsGF0heRH93X889Z4LyD4+lXZ4nKOLw9z+W3AhOvugNKqcgNsCeZ57c6AgOxdQDkoLice098T0lOAavmHgeKSno2V3P4f1WUAIUBeDkYRHytQhw98W3eheqkob1je0mqMC/foG5p6enp1/THxzsKSe2XzsHAAAAAElFTkSuQmCC" />
       <span class="stack-pill">Sam's Stack <span class="plus">+</span></span>
     </div>
 
@@ -218,7 +220,7 @@
     <div class="grid">
       <figure class="item" style="--x:14%; --y:34%; --size:74px; --dur:8s; --delay:.0s;">
         <span class="art" aria-hidden="true">💻</span>
-        <figcaption class="tag">MacBook Pro</figcaption>
+        <figcaption class="tag">Macbook Air</figcaption>
       </figure>
 
       <figure class="item" style="--x:34%; --y:23%; --size:70px; --dur:7.2s; --delay:.6s;">
