@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TK Chou · Demo A · 召喚觀察</title>
+<style>
+  :root {
+    --bg: #efe9dd;
+    --ink: #232220;
+    --tag-border: rgba(35,34,32,0.55);
+    --mono: ui-monospace,"SF Mono",SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+    --spin: 48s;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--mono);
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  /* ===== Stage ===== */
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* ===== Orbit ===== */
+  .orbit {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    opacity: 0;
+    transform: scale(.2);
+    pointer-events: none;
+    transition: transform .55s cubic-bezier(.2,.85,.25,1),
+                opacity .45s ease;
+  }
+  .stage.open .orbit     { opacity: 1; transform: scale(1); pointer-events: auto; }
+  .stage.detail .orbit   { opacity: 0; transform: scale(1.08); pointer-events: none; }
+
+  .ring {
+    position: absolute;
+    inset: 0;
+    animation: spin var(--spin) linear infinite;
+    transform-origin: 50% 50%;
+  }
+  .stage:not(.open) .ring  { animation-play-state: paused; }
+  .stage.detail .ring      { animation-play-state: paused; }
+
+  .item {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%,-50%) translate(var(--ox,0px),var(--oy,0px));
+    text-decoration: none;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    animation: spin var(--spin) linear infinite reverse;
+    transition: transform .3s ease;
+  }
+  .stage:not(.open) .counter { animation-play-state: paused; }
+  .stage.detail .counter    { animation-play-state: paused; }
+  .item:hover .counter      { transform: scale(1.1); }
+  .orbit:hover .ring,
+  .orbit:hover .counter     { animation-play-state: paused; }
+  .item .art {
+    font-size: 56px;
+    line-height: 1;
+    filter: drop-shadow(0 18px 12px rgba(60,50,35,.2));
+    user-select: none;
+  }
+  .item .tag {
+    font-size: 11px;
+    letter-spacing: .02em;
+    text-align: center;
+    border: 1px solid var(--tag-border);
+    border-radius: 999px;
+    padding: 4px 11px;
+    white-space: nowrap;
+    background: rgba(247,243,234,.7);
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ===== Hero (Brock) ===== */
+  .hero {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%,-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    z-index: 4;
+    transition: opacity .35s ease, transform .45s cubic-bezier(.2,.85,.25,1);
+  }
+  .stage.detail .hero {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%,-50%) scale(.85);
+  }
+  .hero .person {
+    width: 148px;
+    height: auto;
+    image-rendering: pixelated;
+    display: block;
+    filter: drop-shadow(0 30px 22px rgba(60,50,35,.26));
+    user-select: none;
+  }
+  .intro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: min(320px, 82vw);
+    text-align: center;
+    transition: opacity .4s ease;
+  }
+  .stage.open .intro { opacity: .35; }
+  .intro .name {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+  .intro .tagline {
+    font-size: clamp(11px,1.3vw,12.5px);
+    line-height: 1.55;
+    color: rgba(35,34,32,.72);
+  }
+  .intro .tagline.en {
+    font-size: clamp(10px,1.1vw,11px);
+    color: rgba(35,34,32,.48);
+    font-style: italic;
+  }
+  .stack-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f7f3ea;
+    border: 1px solid rgba(35,34,32,.18);
+    border-radius: 999px;
+    padding: 6px 7px 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    font-family: var(--mono);
+    box-shadow: 0 4px 14px rgba(60,50,35,.12);
+    transition: transform .25s ease, background .25s ease;
+  }
+  .stack-pill:hover { transform: translateY(-1px); background: #fffdf8; }
+  .stack-pill .plus {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+  }
+  .stage.open .stack-pill .plus { transform: rotate(45deg); }
+
+  /* ===== Detail card panel ===== */
+  .detail-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(32px) scale(.96);
+    transition: opacity .4s ease, transform .45s cubic-bezier(.2,.85,.25,1);
+  }
+  .stage.detail .detail-panel {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+  }
+
+  .detail-card {
+    background: #f7f3ea;
+    border: 1px solid rgba(35,34,32,.14);
+    border-radius: 24px;
+    padding: 36px 32px 32px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(60,50,35,.13);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .detail-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .detail-icon { font-size: 48px; line-height: 1; flex: none; }
+  .detail-meta { display: flex; flex-direction: column; gap: 4px; }
+  .detail-num {
+    font-size: 10px;
+    letter-spacing: .12em;
+    color: rgba(35,34,32,.38);
+    text-transform: uppercase;
+  }
+  .detail-title { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+  .detail-desc {
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: rgba(35,34,32,.72);
+    border-top: 1px solid rgba(35,34,32,.1);
+    padding-top: 14px;
+  }
+  .detail-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 4px;
+  }
+  .detail-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: rgba(35,34,32,.5);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: color .2s ease;
+    padding: 0;
+  }
+  .detail-back:hover { color: var(--ink); }
+  .detail-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ink);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: opacity .2s ease, transform .2s ease;
+  }
+  .detail-link:hover { opacity: .82; transform: translateY(-1px); }
+  .detail-link.disabled {
+    background: rgba(35,34,32,.18);
+    color: rgba(35,34,32,.45);
+    pointer-events: none;
+  }
+
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    font-size: 11px;
+    letter-spacing: .04em;
+    color: rgba(35,34,32,.4);
+    z-index: 6;
+    white-space: nowrap;
+    transition: opacity .3s ease;
+  }
+  .stage.detail .hint { opacity: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ring, .counter { animation: none !important; }
+  }
+  @media (max-width: 820px) {
+    .hero .person { width: 110px; }
+    .item .art { font-size: 44px; }
+    .detail-card { padding: 28px 22px 24px; border-radius: 18px; }
+    .detail-icon { font-size: 38px; }
+    .detail-title { font-size: 17px; }
+  }
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <div class="orbit"><div class="ring" id="ring"></div></div>
+
+  <div class="hero">
+    <img class="person" alt="Brock"
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAAAMFBMVEUBAAAAAAAsOyU7LCViLBliSjNiM0KEakKpYkrYajvPjWL2xan///9ijVI7akqyQgPb/fWDAAAAAXRSTlMAQObYZgAAAh5JREFUeNrt14lq4zAUhWEdbdESS+//tnOudQ2dsIzRDTAU/8hpgPL1VGGL+y96enp6SokvIXxLCy69ggt8voNSC68XT0JIcPZIrVJIdjClpKBEMFhBlXjkYVYx6DQeLZgXKhbWK2D0aKzTwzc+lSCjiPEsMAW7KBhP6qecYAZL6izJUzrsXmqNUAkhC+iMASnT6lcFzhpya61rHAxmVCkW3ReAWGudEV8A+eQWK0E+0yyGQI9viMmZFcZ75ELwMiHrCFpFByDSSwQnQcYfFlDuLoIpKCJMXqUoZJwiro3RAJ6iUBBQRs5ZDdfIXeKcpIpT/sCuqMRF6hsZbQBpLEm31jPsgWsUsMjFrcLuDYrn2JpXp3oY2AEzDQFV732JERhjwAiW0k+Q2nF4P4bfAeuEerlLLWIcbBwUseHVOS+wiNfyoMS2warempjp6UKK2PEUlHwrMvAwgrg4PzJb4BItoDhD+glavEHiQ7SAQwkFVRzY8OKHp+BqB4R6q9Pzfg/Mc66B/vgLhMOheXe/Ukqus+LT84Bz8CfHife51nvLMnBcmGcAxvgh4q7XWxcRcH7otOsGF0heRH93X889Z4LyD4+lXZ4nKOLw9z+W3AhOvugNKqcgNsCeZ57c6AgOxdQDkoLice098T0lOAavmHgeKSno2V3P4f1WUAIUBeDkYRHytQhw98W3eheqkob1je0mqMC/foG5p6enp1/THxzsKSe2XzsHAAAAAElFTkSuQmCC" />
+    <div class="intro">
+      <span class="name">TK Chou</span>
+      <span class="tagline zh">非理科出身，卻停不下來地用程式把生活的小麻煩變成小工具。</span>
+      <span class="tagline en">Not a tech major, but can't stop turning life's small annoyances into little tools.</span>
+    </div>
+    <button class="stack-pill" id="toggle" type="button" aria-expanded="false">
+      TK's Stack <span class="plus">+</span>
+    </button>
+  </div>
+
+  <!-- Detail card (hidden until an item is clicked) -->
+  <div class="detail-panel" id="detailPanel" role="dialog" aria-modal="true" aria-label="詳細介紹">
+    <div class="detail-card">
+      <div class="detail-top">
+        <span class="detail-icon" id="dIcon"></span>
+        <div class="detail-meta">
+          <span class="detail-num" id="dNum"></span>
+          <span class="detail-title" id="dTitle"></span>
+        </div>
+      </div>
+      <p class="detail-desc" id="dDesc"></p>
+      <div class="detail-footer">
+        <button class="detail-back" id="detailBack" type="button">← 返回</button>
+        <a class="detail-link" id="dLink" href="#" target="_blank" rel="noopener">前往 →</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint" id="hint">點一下「＋」展開 · Tap + to explore</p>
+</main>
+
+<script>
+  /* =========================================================
+     作品集設定清單
+     icon: emoji, title: 名稱, desc: 100-300字介紹, url: 外部連結
+  ========================================================= */
+  const PORTFOLIO = [
+    {
+      icon: "💼",
+      title: "LinkedIn",
+      desc: "TK Chou 的職涯足跡。#Economics 出身，目前透過 Vibecoding 持續建造各種小作品。如果你對跨領域學習、或是「非工程師如何做出有用的東西」這件事有興趣，歡迎連結。",
+      url: "https://www.linkedin.com/in/takangchou/"
+    },
+    {
+      icon: "🐙",
+      title: "GitHub",
+      desc: "所有作品的源頭。從 MLB 球員數據追蹤到 Google Maps 清單匯出，程式不是我的背景，卻是我現在最常拿來解決生活小問題的工具。每週都有新嘗試。",
+      url: "https://github.com/bagayellowai2025-cyber"
+    },
+    {
+      icon: "⚾",
+      title: "MLB 台灣球員追蹤",
+      desc: "用 Google Apps Script 自動追蹤旅美台灣球員的每日數據，整合成靜態網頁。起源很單純：懶得每天手動查比分，乾脆讓程式幫我查。技術棧：GAS + 爬蟲 + 靜態 HTML。",
+      url: "https://github.com/bagayellowai2025-cyber/mlb-tw-tracker-gas"
+    },
+    {
+      icon: "🗺️",
+      title: "Google Maps 清單匯出",
+      desc: "一個 Chrome 主控台腳本，幫你把 Google Maps「已儲存」清單一鍵匯出成 CSV。起源是整理旅遊清單時，發現 Google 沒有這個功能，就自己做了一個。",
+      url: "https://github.com/bagayellowai2025-cyber/Google-Maps-Saved-List-Exporter"
+    },
+    {
+      icon: "🎷",
+      title: "Jazz Artist of Today",
+      desc: "每天自動推薦一位爵士樂手，附上簡介與代表作連結。Swing Dancer 的副業作品，同時也是我練習前端爬蟲的藉口。用 HTML + JS 完成，不需要後端。",
+      url: "https://github.com/bagayellowai2025-cyber/jazz-artist-of-today"
+    },
+  ];
+
+  (function () {
+    const stage       = document.getElementById('stage');
+    const ring        = document.getElementById('ring');
+    const toggle      = document.getElementById('toggle');
+    const hint        = document.getElementById('hint');
+    const detailBack  = document.getElementById('detailBack');
+    const dIcon       = document.getElementById('dIcon');
+    const dNum        = document.getElementById('dNum');
+    const dTitle      = document.getElementById('dTitle');
+    const dDesc       = document.getElementById('dDesc');
+    const dLink       = document.getElementById('dLink');
+
+    const n      = PORTFOLIO.length;
+    const radius = Math.min(window.innerWidth, window.innerHeight) * 0.33;
+
+    PORTFOLIO.forEach(function (p, i) {
+      const a = document.createElement('a');
+      a.className = 'item';
+      a.href = '#';
+      a.setAttribute('aria-label', p.title);
+
+      const angle = (-90 + i * (360 / n)) * Math.PI / 180;
+      a.style.setProperty('--ox', (Math.cos(angle) * radius).toFixed(1) + 'px');
+      a.style.setProperty('--oy', (Math.sin(angle) * radius).toFixed(1) + 'px');
+      a.innerHTML =
+        '<span class="counter"><span class="art" aria-hidden="true">' + p.icon +
+        '</span><span class="tag">' + p.title + '</span></span>';
+
+      a.addEventListener('click', function (e) {
+        e.preventDefault();
+        openDetail(p, i + 1);
+      });
+      ring.appendChild(a);
+    });
+
+    function openDetail(p, num) {
+      dIcon.textContent  = p.icon;
+      dNum.textContent   = '#' + String(num).padStart(3, '0');
+      dTitle.textContent = p.title;
+      dDesc.textContent  = p.desc;
+      if (p.url && p.url !== '#') {
+        dLink.href = p.url;
+        dLink.classList.remove('disabled');
+        dLink.textContent = '前往 →';
+      } else {
+        dLink.href = '#';
+        dLink.classList.add('disabled');
+        dLink.textContent = '即將推出';
+      }
+      stage.classList.remove('open');
+      stage.classList.add('detail');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function closeDetail() {
+      stage.classList.remove('detail');
+      stage.classList.add('open');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+
+    detailBack.addEventListener('click', closeDetail);
+
+    // Close on Escape
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && stage.classList.contains('detail')) closeDetail();
+    });
+
+    toggle.addEventListener('click', function () {
+      if (stage.classList.contains('detail')) { closeDetail(); return; }
+      const open = stage.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+      hint.textContent = open
+        ? '點 icon 看詳細介紹 · 再點一次收合'
+        : '點一下「＋」展開 · Tap + to explore';
+    });
+  })();
+</script>
+</body>
+</html>
